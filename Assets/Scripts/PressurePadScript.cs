@@ -53,7 +53,7 @@ public class PressurePadScript : MonoBehaviour {
 			yield return new WaitForSeconds(waitTime);
 			transform.position = activatedElevation;
 			activated = true;
-			return false;
+			
 		}
 
 	}

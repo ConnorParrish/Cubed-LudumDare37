@@ -2,21 +2,24 @@
 using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class PlayerMovementScript : MonoBehaviour {
 
-	public float speed;
-	public bool isFinished;
-	public bool isDead;
-	public bool onMovingPlatform;
+    /// <summary>
+    /// Bullet prefab loaded from Inspector.
+    /// </summary>
 	public GameObject bullet;
-	public List<GameObject> Bullets = new List<GameObject>(2);
+	private bool isFinished;
+	private bool isDead;
+	private bool onMovingPlatform;
 
+	public float speed;
 	Rigidbody playerRigidbody;
 	Vector3 movement;
 	GameObject GameOverCanvas;
 	GameObject NextLevelCanvas;
-	// GameObject PauseCanvas;
+	private List<GameObject> Bullets = new List<GameObject>(2);
 	bool evenBullet;
 
 	// Use this for initialization
@@ -41,71 +44,97 @@ public class PlayerMovementScript : MonoBehaviour {
 			Debug.Log("Ah, shit. He's dead...");
 		}
 
-		if (transform.position.y < -30){
+		if (transform.position.y < -30)
+        {
 			isDead = true;
 			GameOverCanvas.SetActive(true);
 		}
-		if (isFinished){
+		if (isFinished)
+        {
 			Debug.Log("You completed the level!");
 			movement = Vector3.zero;
 			NextLevelCanvas.SetActive(true);			
 		}
-		if (Input.GetKeyDown(KeyCode.Escape)){
+		if (Input.GetKeyDown(KeyCode.Escape))
+        {
 			Application.Quit();
 		}
-		// if (Input.GetKeyDown(KeyCode.Escape) && !PauseCanvas.activeSelf){
-			// PauseCanvas.SetActive(true);
-		// } else if (Input.GetKeyDown(KeyCode.Escape) && PauseCanvas.activeSelf){
-			// PauseCanvas.SetActive(false);
-		
-
-		// if ((h != 0 || v != 0) && transform.parent != null){
-		// 	playerRigidbody.isKinematic = false;
-		// 	transform.parent = null;
-		// }
-
-		// Move(h,v);
-		// Debug.Log("h: " + h + "| v: " + v);
-		if (Input.GetKey(KeyCode.W)){
-			transform.Translate(movement);
-			transform.eulerAngles = new Vector3(0,0,0);
-		}
-		if (Input.GetKey(KeyCode.A)){
-			transform.Translate(movement);
-			transform.eulerAngles = new Vector3(0,-90,0);
-		}
-		if (Input.GetKey(KeyCode.D)){
-			transform.Translate(movement);
-			transform.eulerAngles = new Vector3(0,90,0);
-		}
-		if (Input.GetKey(KeyCode.S)){
-			transform.Translate(movement);
-			transform.eulerAngles = new Vector3(0,180,0);
-		}
-
-		if (Input.GetButtonDown("Jump")){
-			if (transform.parent != null){
-				Debug.Log("Parent position" + transform.parent.position);
-				ShootOrb(transform.rotation, transform.parent.position + new Vector3(0,1.5f,0), transform.eulerAngles.y);
-			}  else if (transform.parent == null) {
-				ShootOrb(transform.rotation, transform.position, transform.eulerAngles.y);
-			}
-		}
-
+        HandleKeyboardInputs();
 				
 	}
 
-	void ShootOrb(Quaternion rotation, Vector3 pos, float dir){
-		Debug.Log(pos);
-		GameObject orb = (GameObject)Instantiate (bullet, new Vector3(pos.x, pos.y, pos.z), rotation);
-		if (!evenBullet){
+    /// <summary>
+    /// Handle user input
+    /// </summary>
+    private void HandleKeyboardInputs()
+    {
+        // if (Input.GetKeyDown(KeyCode.Escape) && !PauseCanvas.activeSelf){
+        // PauseCanvas.SetActive(true);
+        // } else if (Input.GetKeyDown(KeyCode.Escape) && PauseCanvas.activeSelf){
+        // PauseCanvas.SetActive(false);
+
+
+        // if ((h != 0 || v != 0) && transform.parent != null){
+        // 	playerRigidbody.isKinematic = false;
+        // 	transform.parent = null;
+        // }
+
+        // Move(h,v);
+        // Debug.Log("h: " + h + "| v: " + v);
+        if (Input.GetKey(KeyCode.W))
+        {
+            transform.Translate(movement);
+            transform.eulerAngles = new Vector3(0, 0, 0);
+        }
+        if (Input.GetKey(KeyCode.A))
+        {
+            transform.Translate(movement);
+            transform.eulerAngles = new Vector3(0, -90, 0);
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            transform.Translate(movement);
+            transform.eulerAngles = new Vector3(0, 90, 0);
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            transform.Translate(movement);
+            transform.eulerAngles = new Vector3(0, 180, 0);
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            if (transform.parent != null)
+            {
+                Debug.Log("Parent position" + transform.parent.position);
+                ShootOrb(transform.parent.position + new Vector3(0, 1.5f, 0));
+            }
+            else if (transform.parent == null) // this doesn't make any sense
+            {   //          quat rotation       spawn location      bulletangle
+                ShootOrb(transform.position);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Shoots an orb from the player.
+    /// </summary>
+    /// <param name="spawnOffset">The spawn location of the bullet/orb</param>
+    void ShootOrb(Vector3 spawnOffset){
+        Quaternion rotation = transform.rotation;
+        float bulletAngle = transform.eulerAngles.y;
+
+		GameObject orb = (GameObject)Instantiate (bullet, spawnOffset, rotation);
+		if (!evenBullet)
+        {
 			orb.GetComponent<ColorScript>().isOrange = true;
 			evenBullet = !evenBullet;
-		} else {
+		} else
+        {
 			orb.GetComponent<ColorScript>().isOrange = false;
 			evenBullet = !evenBullet;
 		}
-		orb.GetComponent<BulletMovement>().direction = dir;
+		orb.GetComponent<BulletMovement>().SetDirection(bulletAngle);
 
 		Bullets.Add(orb);
 
@@ -118,6 +147,11 @@ public class PlayerMovementScript : MonoBehaviour {
 
 	}
 
+    /// <summary>
+    /// Moves the player based off user input
+    /// </summary>
+    /// <param name="h"></param>
+    /// <param name="v"></param>
 	void Move (float h, float v) {
 		movement.Set(v, 0f, -h);
 		movement = movement.normalized * speed * Time.deltaTime;
@@ -133,11 +167,11 @@ public class PlayerMovementScript : MonoBehaviour {
 		}
 
 		if (col.gameObject.tag == "Bullet"){
-			if (Bullets[0] == col.gameObject && (Bullets[0].GetComponent<BulletMovement>().isBig && Bullets[1].GetComponent<BulletMovement>().isBig)){
+			if (Bullets[0] == col.gameObject && (Bullets[0].GetComponent<BulletMovement>().isPlaced && Bullets[1].GetComponent<BulletMovement>().isPlaced)){
 				Debug.Log("You touched the first bullet");
 				transform.position = Bullets[1].transform.position;
 			}
-			else if (Bullets[1] == col.gameObject && (Bullets[0].GetComponent<BulletMovement>().isBig && Bullets[1].GetComponent<BulletMovement>().isBig)){
+			else if (Bullets[1] == col.gameObject && (Bullets[0].GetComponent<BulletMovement>().isPlaced && Bullets[1].GetComponent<BulletMovement>().isPlaced)){
 				Debug.Log("You touched the second bullet");
 				transform.position = Bullets[0].transform.position;
 			}
